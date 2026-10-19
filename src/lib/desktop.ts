@@ -27,6 +27,7 @@ export const restoreBackupFile = (path: string, backup: string) => invoke<void>(
 export const deleteFile = (path: string) => invoke<void>('delete_file', { path });
 export const createFolder = (path: string) => invoke<void>('create_folder', { path });
 export const getHardware = () => invoke<Hardware>('get_hardware');
+export const getCpuUsage = () => invoke<number | null>('get_cpu_usage');
 export const getGpuMetrics = () => invoke<GpuMetric[]>('get_gpu_metrics');
 export const setGpuSamplerInterval = (seconds:number) => invoke<void>('set_gpu_sampler_interval',{seconds});
 export async function deleteModel(baseUrl:string,name:string){if(desktop)return invoke<void>('ollama_delete',{name});const response=await fetch(`${baseUrl.replace(/\/$/,'')}/api/delete`,{method:'DELETE',headers:{'Content-Type':'application/json'},body:JSON.stringify({name})});if(!response.ok)throw new Error(`Model silinemedi: HTTP ${response.status}`);}

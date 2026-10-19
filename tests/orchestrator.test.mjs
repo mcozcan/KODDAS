@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { buildPlannerPrompt, isResearchOnlyTask, parseAgentPlan, shouldOrchestrate, splitAgentTask } from '../src/lib/orchestrator.ts';
+import { buildPlannerPrompt, isCodingEditRequest, isContextBudgetError, isResearchOnlyTask, parseAgentPlan, shouldOrchestrate, splitAgentTask } from '../src/lib/orchestrator.ts';
 import { applyAgentPatch, parseAgentPatch } from '../src/lib/agentPatch.ts';
 
 test('delegates complex Turkish multi-step coding requests but skips simple tasks', () => {
@@ -9,6 +9,17 @@ test('delegates complex Turkish multi-step coding requests but skips simple task
   assert.equal(shouldOrchestrate('İki dosyada aynı tasarımı güncelle', 2), true);
 });
 
+test('detects Turkish Laravel setup prompts as multi-step code edits', () => {
+  const prompt = 'Laravel 13 kurmanı istiyorum ana sayfasında KODDAŞ kod dünyasına hoşgeldin yazsın animasyonlu olsun responsive tasarla';
+  assert.equal(isCodingEditRequest(prompt), true);
+  assert.equal(shouldOrchestrate(prompt, 1), true);
+  const tasks = splitAgentTask(prompt);
+  assert.deepEqual(tasks.map(task => task.role), ['Proje kurulumu', 'Ana sayfa', 'Arayüz animasyonu', 'Responsive arayüz']);
+  assert.match(tasks[0].task, /framework ile proje iskeletini/);
+  assert.match(tasks[1].task, /KODDAŞ kod dünyasına hoşgeldin/);
+  assert.ok(tasks.every(task => task.task.length < 180));
+  assert.equal(isContextBudgetError(new Error('İstek gönderilmedi: num_ctx=2048')), true);
+});
 test('bounds and validates delegated tasks returned by the planner', () => {
   const plan = parseAgentPlan('Plan: {"summary":"Projeyi incele","tasks":[{"role":"Mimar","task":"Mevcut yapıyı incele"},{"role":"Geliştirici","task":"Gerekli entegrasyonları belirle"},{"role":"Fazla","task":"Bu görev kesilmeli"},{"role":"Fazla","task":"Kesilmeli"}]}');
   assert.equal(plan.tasks.length, 3);
@@ -39,7 +50,7 @@ test('sequential task patches build on the previous task draft', () => {
 test('invalid or truncated splitter output has a deterministic smaller-task fallback', () => {
   const tasks = splitAgentTask('Add task listing, and add task creation, and add responsive styling');
   assert.equal(tasks.length, 3);
-  assert.match(tasks[0].task, /only this part/);
+  assert.match(tasks[0].task, /task listing/);
   assert.match(tasks[2].task, /responsive styling/);
   const fileTasks = splitAgentTask('Implement the requested feature', ['routes/web.php', 'app/Models/Task.php']);
   assert.equal(fileTasks.length, 2);

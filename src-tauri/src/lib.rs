@@ -188,6 +188,13 @@ impl GpuSampler {
     fn shutdown(&self){if let Ok(mut child)=self.child.lock(){if let Some(mut process)=child.take(){let _=process.kill();let _=process.wait();}}}
 }
 
+#[derive(Default,Clone)]
+struct CpuSampler { latest: Arc<Mutex<Option<f32>>>, stop: Arc<AtomicBool> }
+impl CpuSampler {
+    fn start(&self){let latest=self.latest.clone();let stop=self.stop.clone();std::thread::spawn(move||{let mut system=System::new();system.refresh_cpu_all();while !stop.load(Ordering::Relaxed){std::thread::sleep(Duration::from_secs(1));if stop.load(Ordering::Relaxed){break;}system.refresh_cpu_all();let cores=system.cpus();let usage=if cores.is_empty(){None}else{Some(cores.iter().map(|cpu|cpu.cpu_usage()).sum::<f32>()/cores.len() as f32)};if let Ok(mut current)=latest.lock(){*current=usage.map(|value|value.clamp(0.0,100.0));}}});}
+    fn snapshot(&self)->Option<f32>{self.latest.lock().ok().and_then(|value|*value)}
+    fn shutdown(&self){self.stop.store(true,Ordering::Relaxed);}
+}
 #[derive(Serialize)]
 struct Hardware { gpu_name: Option<String>, vram_total_mb: Option<u64>, vram_free_mb: Option<u64>, driver: Option<String>, cuda: bool, cpu: String, ram_total_mb: u64, os: String, gpus: Vec<GpuMetric> }
 
@@ -388,6 +395,8 @@ fn terminal_close(id:String,terminals:State<TerminalSession>)->Result<(),String>
 fn terminal_cleanup(terminals:&TerminalSession){if let Ok(mut sessions)=terminals.0.lock(){sessions.clear();}}
 
 #[tauri::command]
+fn get_cpu_usage(sampler:State<'_,CpuSampler>)->Option<f32>{sampler.snapshot()}
+#[tauri::command]
 async fn get_hardware()->Hardware{let mut system=System::new();system.refresh_cpu_all();system.refresh_memory();let cpu=system.cpus().first().map(|c|c.brand().to_string()).unwrap_or_else(||"CPU algılanamadı".into());let ram_total_mb=system.total_memory()/1024/1024;let os=System::long_os_version().unwrap_or_else(||"Windows".into());let gpus=tauri::async_runtime::spawn_blocking(query_gpu_metrics).await.unwrap_or_default();let first=gpus.first();Hardware{gpu_name:first.map(|g|g.name.clone()),vram_total_mb:first.and_then(|g|g.total_mb),vram_free_mb:first.and_then(|g|g.free_mb),driver:first.and_then(|g|g.driver.clone()),cuda:first.is_some_and(|g|g.detection=="nvidia-smi"),cpu,ram_total_mb,os,gpus}}
 
 fn ollama_gpu_uuids()->Vec<String>{let output=Command::new("nvidia-smi").args(["--query-compute-apps=gpu_uuid,process_name","--format=csv,noheader,nounits"]).creation_flags(0x08000000).output().ok().filter(|output|output.status.success());let Some(output)=output else{return Vec::new();};String::from_utf8_lossy(&output.stdout).lines().filter_map(|line|{let mut fields=line.splitn(2,',').map(str::trim);let uuid=fields.next()?;let process=fields.next()?.to_lowercase();(process.contains("ollama")||process.contains("llama_server")).then(||uuid.to_string())}).collect()}
@@ -454,4 +463,4 @@ async fn install_ollama(app:AppHandle)->Result<String,String>{
 #[cfg(windows)]
 use std::os::windows::process::CommandExt;
 
-pub fn run(){tauri::Builder::default().manage(Workspace::default()).manage(TerminalSession::default()).manage(ChatCancellation::default()).manage(GpuSampler::default()).plugin(tauri_plugin_dialog::init()).setup(|app|{app.state::<GpuSampler>().start(2);Ok(())}).invoke_handler(tauri::generate_handler![set_workspace,clear_workspace,list_directory,read_file,write_file,path_exists,backup_file,restore_backup_file,delete_file,create_folder,laravel_create_project,get_git_changes,ollama_models,ollama_running_models,ollama_delete,ollama_chat,ollama_cancel_chat,ollama_wait_ready,ollama_model_loaded,ollama_unload_model,restart_ollama,ollama_diagnostics,log_agent_raw,ollama_pull,terminal_spawn,terminal_write,terminal_resize,terminal_close,get_hardware,get_gpu_metrics,set_gpu_sampler_interval,ensure_ollama,install_ollama]).on_window_event(|window,event|{if matches!(event,tauri::WindowEvent::CloseRequested{..}){terminal_cleanup(&window.state::<TerminalSession>());window.state::<GpuSampler>().shutdown();}}).run(tauri::generate_context!()).expect("KODDAŞ başlatılamadı");}
+pub fn run(){tauri::Builder::default().manage(Workspace::default()).manage(TerminalSession::default()).manage(ChatCancellation::default()).manage(GpuSampler::default()).manage(CpuSampler::default()).plugin(tauri_plugin_dialog::init()).setup(|app|{app.state::<GpuSampler>().start(2);app.state::<CpuSampler>().start();Ok(())}).invoke_handler(tauri::generate_handler![set_workspace,clear_workspace,list_directory,read_file,write_file,path_exists,backup_file,restore_backup_file,delete_file,create_folder,laravel_create_project,get_git_changes,ollama_models,ollama_running_models,ollama_delete,ollama_chat,ollama_cancel_chat,ollama_wait_ready,ollama_model_loaded,ollama_unload_model,restart_ollama,ollama_diagnostics,log_agent_raw,ollama_pull,terminal_spawn,terminal_write,terminal_resize,terminal_close,get_hardware,get_gpu_metrics,get_cpu_usage,set_gpu_sampler_interval,ensure_ollama,install_ollama]).on_window_event(|window,event|{if matches!(event,tauri::WindowEvent::CloseRequested{..}){terminal_cleanup(&window.state::<TerminalSession>());window.state::<GpuSampler>().shutdown();window.state::<CpuSampler>().shutdown();}}).run(tauri::generate_context!()).expect("KODDAŞ başlatılamadı");}
