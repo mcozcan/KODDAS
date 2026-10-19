@@ -14,6 +14,15 @@ export class PatchMatchError extends Error {
   }
 }
 
+export class PatchValidationError extends Error {
+  public readonly path: string;
+  constructor(path: string, detail: string) {
+    super(`Dosya türü doğrulaması başarısız (${path}): ${detail}`);
+    this.name = 'PatchValidationError';
+    this.path = path;
+  }
+}
+
 export function parseAgentPatch(response: string, defaultPath = '', allowedPaths?: string[]): AgentPatchBlock[] {
   const raw = response.replace(/^\uFEFF/, '').trim();
   const fencedCode = [...raw.matchAll(/```(?:[\w+-]+)?\s*\r?\n([\s\S]*?)```/g)].map(match => match[1].trim()).filter(Boolean);
@@ -102,5 +111,15 @@ export function applyAgentPatch(original: string, blocks: AgentPatchBlock[], tar
     lines.splice(found.start, found.count, ...block.replace.replace(/\r\n/g, '\n').split('\n'));
     value = lines.join('\n');
   }
-  return value.replace(/\n/g, newline);
+  value = value.replace(/\n/g, newline);
+  if (/\.json$/i.test(targetPath)) {
+    try {
+      const parsed: unknown = JSON.parse(value);
+      if (/composer\.json$/i.test(targetPath) && (!parsed || typeof parsed !== 'object' || Array.isArray(parsed))) throw new Error('Composer manifest kökü bir nesne olmalı.');
+    } catch (error) {
+      const detail = error instanceof Error ? error.message : String(error);
+      throw new PatchValidationError(targetPath, `dosya geçerli JSON olmalı; composer.json kökü nesne olmalı. HTML, PHP veya açıklama metni JSON dosyasına yazılamaz. ${detail}`);
+    }
+  }
+  return value;
 }

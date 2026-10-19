@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { parseAgentPatch, applyAgentPatch, PatchMatchError } from '../src/lib/agentPatch.ts';
+import { parseAgentPatch, applyAgentPatch, PatchMatchError, PatchValidationError } from '../src/lib/agentPatch.ts';
 
 test('parses and applies SEARCH/REPLACE, with normalized whitespace fallback', () => {
   const patch = parseAgentPatch('FILE: routes/web.php\n<<<<<<< SEARCH\nRoute::get(  "/old"  );\n=======\nRoute::get("/new");\n>>>>>>> REPLACE');
@@ -58,4 +58,9 @@ test('does not remap an unapproved multi-file target to the first file', () => {
 test('an unrelated FILE header falls back to the selected target', () => {
   const patch = parseAgentPatch('FILE: invented.php\n<<<<<<< SEARCH\nold\n=======\nnew\n>>>>>>> REPLACE', 'web.php');
   assert.equal(patch[0].path, 'web.php');
+});
+
+test('rejects HTML, PHP, and prose accidentally written into JSON targets', () => {
+  const blocks = parseAgentPatch('FILE: composer.json\n<<<<<<< FULL FILE\n{"require": {}}\n<!DOCTYPE html>\nclass Task extends Model {}\n>>>>>>> FULL FILE', 'composer.json', ['composer.json']);
+  assert.throws(() => applyAgentPatch('{"require": {}}', blocks, 'composer.json'), PatchValidationError);
 });
