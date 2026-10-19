@@ -121,5 +121,8 @@ export function applyAgentPatch(original: string, blocks: AgentPatchBlock[], tar
       throw new PatchValidationError(targetPath, `dosya geçerli JSON olmalı; composer.json kökü nesne olmalı. HTML, PHP veya açıklama metni JSON dosyasına yazılamaz. ${detail}`);
     }
   }
+  if (/\.(?:mjs|cjs|js|jsx|ts|tsx)$/i.test(targetPath) && (/<\?php|\bclass\s+\w+\s+extends\s+(?:migration|model)\b/i.test(value) || value.includes('use Illuminate\\Database\\'))) {
+    throw new PatchValidationError(targetPath, 'JavaScript/TypeScript dosyasına PHP/Laravel sınıfı veya migration kodu yazılamaz.');
+  }
   return value;
 }

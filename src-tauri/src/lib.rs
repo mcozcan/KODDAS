@@ -239,7 +239,7 @@ fn list_directory(path:String,show_hidden:bool,state:State<Workspace>)->Result<V
 fn read_file(path:String,state:State<Workspace>)->Result<String,String>{let root=root(&state)?;let file=within(&root,&path,true)?;let meta=fs::metadata(&file).map_err(|e|e.to_string())?;if meta.len()>2_000_000{return Err("Dosya 2 MB sınırını aşıyor".into());}fs::read_to_string(file).map_err(|e|e.to_string())}
 
 #[tauri::command]
-fn write_file(path:String,content:String,state:State<Workspace>)->Result<(),String>{let root=root(&state)?;let file=within(&root,&path,false)?;if content.len()>2_000_000{return Err("Dosya 2 MB sınırını aşıyor".into());}fs::write(file,content).map_err(|e|e.to_string())}
+fn write_file(path:String,content:String,state:State<Workspace>)->Result<(),String>{let root=root(&state)?;let file=within(&root,&path,false)?;if content.len()>2_000_000{return Err("Dosya 2 MB sınırını aşıyor".into());}if let Some(parent)=file.parent(){fs::create_dir_all(parent).map_err(|e|e.to_string())?;}fs::write(file,content).map_err(|e|e.to_string())}
 
 #[tauri::command]
 fn path_exists(path:String,state:State<Workspace>)->Result<bool,String>{let root=root(&state)?;let file=within(&root,&path,false)?;Ok(file.exists())}
@@ -269,7 +269,7 @@ fn restore_backup_file(path:String,backup:String,state:State<Workspace>)->Result
 fn delete_file(path:String,state:State<Workspace>)->Result<(),String>{let root=root(&state)?;let file=within(&root,&path,true)?;if !file.is_file(){return Err("Yalnızca dosyalar silinebilir".into());}fs::remove_file(file).map_err(|e|e.to_string())}
 
 #[tauri::command]
-fn create_folder(path:String,state:State<Workspace>)->Result<(),String>{let root=root(&state)?;let folder=within(&root,&path,false)?;fs::create_dir(folder).map_err(|e|e.to_string())}
+fn create_folder(path:String,state:State<Workspace>)->Result<(),String>{let root=root(&state)?;let folder=within(&root,&path,false)?;fs::create_dir_all(folder).map_err(|e|e.to_string())}
 
 #[tauri::command]
 async fn laravel_create_project(workspace_path:String,on_progress:Channel<String>,state:State<'_,Workspace>)->Result<String,String>{

@@ -63,4 +63,6 @@ test('an unrelated FILE header falls back to the selected target', () => {
 test('rejects HTML, PHP, and prose accidentally written into JSON targets', () => {
   const blocks = parseAgentPatch('FILE: composer.json\n<<<<<<< FULL FILE\n{"require": {}}\n<!DOCTYPE html>\nclass Task extends Model {}\n>>>>>>> FULL FILE', 'composer.json', ['composer.json']);
   assert.throws(() => applyAgentPatch('{"require": {}}', blocks, 'composer.json'), PatchValidationError);
+  const migration = parseAgentPatch('FILE: composer.js\n<<<<<<< FULL FILE\n<?php\nuse Illuminate\\Database\\Migrations\\Migration;\nclass CreateTasksTable extends Migration {}\n>>>>>>> FULL FILE', 'composer.js', ['composer.js']);
+  assert.throws(() => applyAgentPatch('', migration, 'composer.js'), PatchValidationError);
 });
