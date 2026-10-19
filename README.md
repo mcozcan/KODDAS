@@ -18,30 +18,27 @@ KODDAŞ is local-first. It does not currently provide cloud agents, parallel age
 
 ## Development and release
 
-Install Node.js, Rust, and the [Tauri prerequisites for your OS](https://v2.tauri.app/start/prerequisites/). Linux builds require WebKitGTK and the other Tauri system packages. Install Ollama for your OS and keep it available at `http://127.0.0.1:11434`.
+Install Node.js, Rust, and the [Tauri prerequisites for your OS](https://v2.tauri.app/start/prerequisites/). Linux builds need WebKitGTK and the listed Tauri system packages. Ollama is installed separately on each computer and must be available at `http://127.0.0.1:11434`.
 
-```powershell
+```sh
 npm install
 npm run dev
 node --test tests/*.test.mjs
 ```
 
-Build the Windows standalone executable (no installer):
+Build packages locally on the matching OS:
 
 ```powershell
+# Windows: portable executable (no setup wizard)
 npm run release:exe
 ```
-
-The script runs the tests, builds the frontend and Tauri app without bundling an installer, then writes `release/KODDAŞ-<version>.exe`.
-
-Create native packages on each operating system (Tauri desktop releases must be built on their target OS):
 
 ```sh
 # Linux: AppImage and Debian package
 npm run release:linux
 
-# macOS: DMG
+# macOS: universal DMG for Apple Silicon and Intel
 npm run release:macos
 ```
 
-On Windows, use `npm run release:exe` for the standalone `.exe`. Artifacts are written under `src-tauri/target/release/bundle` for Linux and macOS. Ollama is installed separately on each machine; GPU telemetry is available for NVIDIA via `nvidia-smi`, while the app remains usable without GPU telemetry.
+GitHub Actions builds all three platforms when code is pushed to `main` and stores the outputs as workflow artifacts. Pushing a version tag such as `v1.1.4` also creates a GitHub Release with the Windows `.exe`, Linux `.AppImage` and `.deb`, and universal macOS `.dmg`. Unsigned macOS downloads may show Gatekeeper's first-open warning; signing and notarization require the publisher's Apple Developer credentials. GPU telemetry uses `nvidia-smi` where available; the app remains usable without NVIDIA telemetry.

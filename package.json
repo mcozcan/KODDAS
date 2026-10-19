@@ -8,7 +8,7 @@
     "build": "tsc -b && vite build",
     "release:exe": "powershell -ExecutionPolicy Bypass -File scripts/build-release.ps1",
     "release:linux": "tauri build --bundles appimage,deb",
-    "release:macos": "tauri build --bundles dmg",
+    "release:macos": "tauri build --target universal-apple-darwin --bundles dmg",
     "preview": "vite preview",
     "tauri": "tauri"
   },
