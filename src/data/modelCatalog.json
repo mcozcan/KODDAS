@@ -1,0 +1,17 @@
+[
+  {"name":"qwen2.5-coder:1.5b","parameters":"1.5B","downloadGb":1,"weightsGb":1,"description":"Hafif ve hızlı kod düzenleme modeli.","uses":["Agent","Sohbet","Otomatik tamamlama"],"kvGbPer8k":0.15},
+  {"name":"qwen2.5-coder:3b","parameters":"3B","downloadGb":2,"weightsGb":2,"description":"Düşük bellekli cihazlarda günlük kod işleri.","uses":["Agent","Sohbet","Otomatik tamamlama"],"kvGbPer8k":0.2},
+  {"name":"qwen2.5-coder:7b","parameters":"7B","downloadGb":4.7,"weightsGb":4.7,"description":"Dengeli, genel amaçlı kodlama modeli.","uses":["Agent","Sohbet","Otomatik tamamlama"],"kvGbPer8k":0.35},
+  {"name":"qwen2.5-coder:14b","parameters":"14B","downloadGb":9,"weightsGb":9,"description":"Daha karmaşık çok dosyalı görevlerde güçlü.","uses":["Agent","Sohbet"],"kvGbPer8k":0.55},
+  {"name":"qwen2.5-coder:32b","parameters":"32B","downloadGb":20,"weightsGb":20,"description":"Güçlü iş istasyonları için gelişmiş coding modeli.","uses":["Agent","Sohbet"],"kvGbPer8k":1.1},
+  {"name":"qwen3-coder:30b","parameters":"30B MoE","downloadGb":19,"weightsGb":19,"description":"MoE mimarili, agent ve repository görevlerine uygun.","uses":["Agent","Sohbet"],"kvGbPer8k":0.9},
+  {"name":"qwen3:8b","parameters":"8B","downloadGb":5,"weightsGb":5,"description":"Kod ve genel sohbet arasında dengeli.","uses":["Agent","Sohbet"],"kvGbPer8k":0.4},
+  {"name":"qwen3:14b","parameters":"14B","downloadGb":9,"weightsGb":9,"description":"Güçlü akıl yürütme ve kod açıklama.","uses":["Agent","Sohbet"],"kvGbPer8k":0.6},
+  {"name":"deepseek-coder-v2:16b","parameters":"16B MoE","downloadGb":9,"weightsGb":9,"description":"Kod üretimi ve düzenleme için uzmanlaşmış.","uses":["Agent","Sohbet"],"kvGbPer8k":0.6},
+  {"name":"codestral:22b","parameters":"22B","downloadGb":13,"weightsGb":13,"description":"Kod tamamlama ve repository değişiklikleri.","uses":["Agent","Otomatik tamamlama"],"kvGbPer8k":0.8},
+  {"name":"devstral:24b","parameters":"24B","downloadGb":14,"weightsGb":14,"description":"Kodlama agent'ları ve proje seviyesinde görevler.","uses":["Agent"],"kvGbPer8k":0.85},
+  {"name":"gemma3:12b","parameters":"12B","downloadGb":8,"weightsGb":8,"description":"Genel amaçlı yerel asistan ve kod sohbeti.","uses":["Sohbet","Agent"],"kvGbPer8k":0.55},
+  {"name":"llama3.1:8b","parameters":"8B","downloadGb":5,"weightsGb":5,"description":"Hızlı yerel sohbet ve hafif kod yardımı.","uses":["Sohbet","Agent"],"kvGbPer8k":0.4},
+  {"name":"starcoder2:3b","parameters":"3B","downloadGb":2,"weightsGb":2,"description":"Düşük gecikmeli kod tamamlama.","uses":["Otomatik tamamlama"],"kvGbPer8k":0.2},
+  {"name":"starcoder2:7b","parameters":"7B","downloadGb":4.7,"weightsGb":4.7,"description":"Kod tamamlama için daha kaliteli öneriler.","uses":["Otomatik tamamlama"],"kvGbPer8k":0.35}
+]
